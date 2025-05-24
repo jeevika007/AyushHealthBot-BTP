@@ -1,0 +1,41 @@
+<!-- consult_doctor.html -->
+{% extends "base.html" %}
+{% block title %}Consult Doctor - Ayush Health Bot{% endblock %}
+{% block content %}
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Consult a Doctor</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Form to Describe Problem and Select Doctor -->
+                    <form id="consultForm" action="{{ url_for('users.submit_consultation') }}" method="POST">
+                        <!-- Problem Description -->
+                        <div class="form-group">
+                            <label for="problemDescription">Describe Your Problem</label>
+                            <textarea class="form-control" id="problemDescription" name="problemDescription" rows="4" required></textarea>
+                        </div>
+                        <!-- Select Doctor Specialization -->
+                        <div class="form-group">
+                            <label for="doctorSpecialization">Select Doctor Specialization</label>
+                            <select class="form-control" id="doctorSpecialization" name="doctorSpecialization" required>
+                                <option value="">Select Specialization</option>
+                                <option value="Dentist">Dentist</option>
+                                <option value="Orthopedic">Orthopedic</option>
+                                <option value="Dermatologist">Dermatologist</option>
+                                <option value="Cardiologist">Cardiologist</option>
+                                <!-- Add more specializations as needed -->
+                            </select>
+                        </div>
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-primary btn-block">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

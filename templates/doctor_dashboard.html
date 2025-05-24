@@ -1,0 +1,154 @@
+<!-- doctor_dashboard.html -->
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard - Ayush Health Bot{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Welcome, Dr. {{ current_user.username }}!</h2>
+            <p class="text-muted">Specialization: {{ current_user.specialization }}</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Community Support + Doctor Forum -->
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-comments mr-2"></i>Community Support + Doctor Forum (User Q&A)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if questions %}
+                        <div class="list-group">
+                            <!-- First show urgent unanswered questions -->
+                            {% for question in questions %}
+                                {% if question.urgent and not question.answered %}
+                                    <div class="list-group-item list-group-item-danger">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-1">{{ question.title }}</h5>
+                                            <span class="badge badge-danger">URGENT</span>
+                                        </div>
+                                        <p class="mb-1"><strong>From:</strong> {{ question.patient.username }}</p>
+                                        <p class="mb-1">{{ question.description }}</p>
+                                        <small class="text-muted">Posted: {{ question.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        
+                                        <form action="{{ url_for('doctors.answer_question', question_id=question.id) }}" method="POST" class="mt-3">
+                                            <div class="form-group">
+                                                <textarea class="form-control" name="answer" rows="3" placeholder="Type your answer..." required></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Submit Answer</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <!-- Then show non-urgent unanswered questions -->
+                            {% for question in questions %}
+                                {% if not question.urgent and not question.answered %}
+                                    <div class="list-group-item list-group-item-warning">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-1">{{ question.title }}</h5>
+                                            <span class="badge badge-warning">New</span>
+                                        </div>
+                                        <p class="mb-1"><strong>From:</strong> {{ question.patient.username }}</p>
+                                        <p class="mb-1">{{ question.description }}</p>
+                                        <small class="text-muted">Posted: {{ question.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        
+                                        <form action="{{ url_for('doctors.answer_question', question_id=question.id) }}" method="POST" class="mt-3">
+                                            <div class="form-group">
+                                                <textarea class="form-control" name="answer" rows="3" placeholder="Type your answer..." required></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Submit Answer</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <!-- Finally show answered questions -->
+                            {% for question in questions %}
+                                {% if question.answered %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-1">{{ question.title }}</h5>
+                                            <span class="badge badge-success">Answered</span>
+                                        </div>
+                                        <p class="mb-1"><strong>From:</strong> {{ question.patient.username }}</p>
+                                        <p class="mb-1">{{ question.description }}</p>
+                                        <small class="text-muted">Posted: {{ question.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        
+                                        <div class="mt-3 p-3 bg-light rounded">
+                                            <p class="mb-1"><strong>Your Answer:</strong></p>
+                                            <p class="mb-1">{{ question.answer }}</p>
+                                            <small class="text-muted">Answered: {{ question.answered_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">No questions have been asked in your specialization yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Appointments Section -->
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar-check mr-2"></i>Appointments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if appointments %}
+                        <div class="list-group">
+                            {% for appointment in appointments %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-1">Patient: {{ appointment.patient.username }}</h5>
+                                        {% if appointment.status == 'pending' %}
+                                            <span class="badge badge-warning">Pending</span>
+                                        {% elif appointment.status == 'confirmed' %}
+                                            <span class="badge badge-success">Confirmed</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Cancelled</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="mb-1">
+                                        <i class="far fa-calendar-alt mr-1"></i>
+                                        <strong>Date & Time:</strong> {{ appointment.appointment_date.strftime('%Y-%m-%d %H:%M') }}
+                                    </p>
+                                    
+                                    {% if appointment.status == 'pending' %}
+                                        <div class="mt-3">
+                                            <form action="{{ url_for('doctors.update_appointment', appointment_id=appointment.id) }}" method="POST" class="d-inline">
+                                                <input type="hidden" name="status" value="confirmed">
+                                                <button type="submit" class="btn btn-success mr-2">
+                                                    <i class="fas fa-check mr-1"></i> Confirm Appointment
+                                                </button>
+                                            </form>
+                                            <form action="{{ url_for('doctors.update_appointment', appointment_id=appointment.id) }}" method="POST" class="d-inline">
+                                                <input type="hidden" name="status" value="cancelled">
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-times mr-1"></i> Decline Appointment
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">No appointments scheduled.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,892 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <h2>Welcome, {{ current_user.username }}!</h2>
+      <p class="text-muted">Patient Dashboard</p>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <!-- Quick Actions -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">Quick Actions</h5>
+        </div>
+        <div class="card-body">
+          <a
+            href="{{ url_for('users.old_ui') }}"
+            class="btn btn-outline-primary btn-block mb-3"
+          >
+            <i class="fas fa-stethoscope mr-2"></i>Test/Examine
+          </a>
+          <button
+            class="btn btn-outline-success btn-block mb-3"
+            data-toggle="modal"
+            data-target="#consultDoctorModal"
+          >
+            <i class="fas fa-user-md mr-2"></i>Consult Doctor
+          </button>
+          <button
+            class="btn btn-outline-info btn-block"
+            data-toggle="modal"
+            data-target="#chatAssistantModal"
+          >
+            <i class="fas fa-robot mr-2"></i>Chat with AI Assistant
+          </button>
+          <a
+            href="{{ url_for('users.predict_disease') }}"
+            class="btn btn-outline-warning btn-block mb-3"
+          >
+            <i class="fas fa-notes-medical mr-2"></i>
+
+            Predict Your Disease
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions Section -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0">Your Questions</h5>
+        </div>
+        <div class="card-body">
+          {% if questions %}
+          <div class="list-group">
+            {% for question in questions %}
+            <div
+              class="list-group-item {% if not question.answered %}list-group-item-light{% endif %}"
+            >
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-1">{{ question.title }}</h6>
+                {% if question.urgent %}
+                <span class="badge badge-danger">Urgent</span>
+                {% endif %}
+              </div>
+              <p class="mb-1">{{ question.description }}</p>
+              <small class="text-muted"
+                >Status: {% if question.answered %}
+                <span class="text-success">Answered</span>
+                {% else %}
+                <span class="text-warning">Pending</span>
+                {% endif %}
+              </small>
+
+              {% if question.answered %}
+              <div class="mt-2 p-2 bg-light rounded">
+                <p class="mb-0"><strong>Doctor's Answer:</strong></p>
+                <p class="mb-0">{{ question.answer }}</p>
+                <small class="text-muted"
+                  >Answered by: Dr. {{ question.doctor.username }}</small
+                >
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="mt-3">
+            <button
+              class="btn btn-sm btn-outline-info"
+              data-toggle="modal"
+              data-target="#askQuestionModal"
+            >
+              <i class="fas fa-plus-circle mr-1"></i> Ask New Question
+            </button>
+          </div>
+          {% else %}
+          <p class="text-center mb-3">You haven't asked any questions yet.</p>
+          <div class="text-center">
+            <button
+              class="btn btn-info"
+              data-toggle="modal"
+              data-target="#askQuestionModal"
+            >
+              <i class="fas fa-plus-circle mr-1"></i> Ask Your First Question
+            </button>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Health Status Section -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="card-title mb-0">Your Health Status</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-center text-muted">
+            Your health information will appear here
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appointments Section -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header bg-warning text-white">
+          <h5 class="card-title mb-0">Your Appointments</h5>
+        </div>
+        <div class="card-body">
+          {% if appointments %}
+          <div class="list-group">
+            {% for appointment in appointments %}
+            <div class="list-group-item">
+              <h6 class="mb-1">Dr. {{ appointment.doctor.username }}</h6>
+              <p class="mb-1">
+                <i class="far fa-calendar-alt mr-1"></i>
+                {{ appointment.appointment_date.strftime('%Y-%m-%d %H:%M') }}
+              </p>
+              <small class="text-muted"
+                >Status: {% if appointment.status == 'pending' %}
+                <span class="text-warning">Pending</span>
+                {% elif appointment.status == 'confirmed' %}
+                <span class="text-success">Confirmed</span>
+                {% else %}
+                <span class="text-danger">Cancelled</span>
+                {% endif %}
+              </small>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="mt-3">
+            <button
+              class="btn btn-sm btn-outline-warning"
+              data-toggle="modal"
+              data-target="#bookAppointmentModal"
+            >
+              <i class="fas fa-plus-circle mr-1"></i> Book New Appointment
+            </button>
+          </div>
+          {% else %}
+          <p class="text-center mb-3">
+            You don't have any appointments scheduled.
+          </p>
+          <div class="text-center">
+            <button
+              class="btn btn-warning"
+              data-toggle="modal"
+              data-target="#bookAppointmentModal"
+            >
+              <i class="fas fa-plus-circle mr-1"></i> Book Your First
+              Appointment
+            </button>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ask Question Modal -->
+<div class="modal fade" id="askQuestionModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ask a Doctor</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ url_for('users.ask_question') }}" method="POST">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="title">Question Title</label>
+            <input
+              type="text"
+              class="form-control"
+              id="title"
+              name="title"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea
+              class="form-control"
+              id="description"
+              name="description"
+              rows="3"
+              required
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="specialization">Specialization</label>
+            <select
+              class="form-control"
+              id="specialization"
+              name="specialization"
+              required
+            >
+              <option value="">Select a Specialization</option>
+              <option value="general">General Physician</option>
+              <option value="cardiology">Cardiology</option>
+              <option value="dermatology">Dermatology</option>
+              <option value="neurology">Neurology</option>
+              <option value="orthopedics">Orthopedics</option>
+              <option value="pediatrics">Pediatrics</option>
+              <option value="psychiatry">Psychiatry</option>
+              <option value="dentistry">Dentistry</option>
+            </select>
+          </div>
+          <div class="form-check">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="urgent"
+              name="urgent"
+            />
+            <label class="form-check-label" for="urgent">Mark as Urgent</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">Submit Question</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Consult Doctor Modal -->
+<div class="modal fade" id="consultDoctorModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Consult a Doctor</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ url_for('users.book_consultation') }}" method="POST">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="problem_description"
+              >Describe Your Health Problem</label
+            >
+            <textarea
+              class="form-control"
+              id="problem_description"
+              name="problem_description"
+              rows="4"
+              required
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="specialization">Select Doctor Specialization</label>
+            <select
+              class="form-control"
+              id="specialization"
+              name="specialization"
+              required
+            >
+              <option value="">Select a Specialization</option>
+              <option value="general">General Physician</option>
+              <option value="cardiology">Cardiology</option>
+              <option value="dermatology">Dermatology</option>
+              <option value="neurology">Neurology</option>
+              <option value="orthopedics">Orthopedics</option>
+              <option value="pediatrics">Pediatrics</option>
+              <option value="psychiatry">Psychiatry</option>
+              <option value="dentistry">Dentistry</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-success">
+            Send Consultation Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Book Appointment Modal -->
+<div class="modal fade" id="bookAppointmentModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Book an Appointment</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ url_for('users.book_appointment') }}" method="POST">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="doctor_id">Select Doctor</label>
+            <select
+              class="form-control"
+              id="doctor_id"
+              name="doctor_id"
+              required
+            >
+              <option value="">Select a Doctor</option>
+              {% for doctor in doctors %}
+              <option value="{{ doctor.id }}">
+                Dr. {{ doctor.username }} ({{ doctor.specialization }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="appointment_date">Appointment Date & Time</label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              id="appointment_date"
+              name="appointment_date"
+              required
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-warning">
+            Book Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Chat Assistant Modal -->
+<div class="modal fade" id="chatAssistantModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-robot mr-2"></i>Context-Aware Health Assistant
+        </h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="memory-indicator mb-3">
+          <div class="d-flex align-items-center">
+            <div class="memory-indicator-icon mr-2">
+              <i class="fas fa-brain text-info"></i>
+            </div>
+            <div class="memory-indicator-text">
+              <small class="text-muted" id="memoryStatus"
+                >Assistant is ready to help you</small
+              >
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="chat-container"
+          id="chatContainer"
+          style="
+            height: 350px;
+            overflow-y: auto;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+          "
+        >
+          <!-- Chat messages will appear here -->
+          <div class="message bot">
+            <div class="message-content p-3 mb-2 rounded bg-light">
+              <i class="fas fa-robot mr-2 text-info"></i>
+              Hello! I'm your context-aware health assistant. I can remember our
+              conversation and provide personalized health information. How can
+              I help you today?
+            </div>
+          </div>
+        </div>
+
+        <form id="chatForm" class="mt-3">
+          <div class="input-group">
+            <input
+              type="text"
+              id="userMessage"
+              class="form-control"
+              placeholder="Type your health question..."
+              required
+            />
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-info">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Quick suggestion chips -->
+        <div class="suggestion-chips mt-3">
+          <div class="d-flex flex-wrap">
+            <button
+              class="suggestion-chip btn btn-sm btn-outline-info m-1"
+              data-text="I have a headache and fever"
+            >
+              I have a headache and fever
+            </button>
+            <button
+              class="suggestion-chip btn btn-sm btn-outline-info m-1"
+              data-text="What should I take for a cough?"
+            >
+              What should I take for a cough?
+            </button>
+            <button
+              class="suggestion-chip btn btn-sm btn-outline-info m-1"
+              data-text="How do I book an appointment?"
+            >
+              How do I book an appointment?
+            </button>
+            <button
+              class="suggestion-chip btn btn-sm btn-outline-info m-1"
+              data-text="My symptoms have changed"
+            >
+              My symptoms have changed
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="w-100 d-flex justify-content-between align-items-center">
+          <small class="text-muted">
+            <i class="fas fa-lock mr-1"></i>Your conversation is private and
+            secure
+          </small>
+          <span>
+            <span
+              class="badge badge-pill badge-info"
+              id="contextBadge"
+              data-toggle="tooltip"
+              title="This assistant remembers symptoms and information from your conversation"
+            >
+              <i class="fas fa-memory mr-1"></i>Context-Aware
+            </span>
+            <span
+              class="badge badge-pill badge-success"
+              data-toggle="tooltip"
+              title="Powered by advanced AI"
+            >
+              <i class="fas fa-brain mr-1"></i>AI-Powered
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function () {
+    // Set minimum date for appointment booking to today
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, "0");
+    var mm = String(today.getMonth() + 1).padStart(2, "0");
+    var yyyy = today.getFullYear();
+    var hh = String(today.getHours()).padStart(2, "0");
+    var min = String(today.getMinutes()).padStart(2, "0");
+
+    today = yyyy + "-" + mm + "-" + dd + "T" + hh + ":" + min;
+    $("#appointment_date").attr("min", today);
+
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
+    // Context-aware chat functionality
+    let conversation_id = null;
+    let reportedSymptoms = [];
+    let currentLanguage = "en";
+
+    // Handle chat form submission
+    $("#chatForm").on("submit", function (e) {
+      e.preventDefault();
+
+      const userMessage = $("#userMessage").val().trim();
+      if (!userMessage) return;
+
+      // Add user message to chat
+      addMessageToChat(userMessage, "user");
+
+      // Clear input
+      $("#userMessage").val("");
+
+      // Add typing indicator
+      showTypingIndicator();
+
+      // Send message to server
+      $.ajax({
+        url: "/api/send",
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({
+          message: userMessage,
+          conversation_id: conversation_id,
+        }),
+        success: function (response) {
+          hideTypingIndicator();
+
+          // Save conversation ID if it's new
+          if (!conversation_id) {
+            conversation_id = response.conversation_id;
+          }
+
+          // Update language indicator if language changed
+          if (response.language && response.language !== currentLanguage) {
+            currentLanguage = response.language;
+            updateLanguageIndicator(currentLanguage);
+          }
+
+          // Add bot response to chat
+          addMessageToChat(response.message, "bot");
+
+          // Update memory indicator with entities if detected
+          if (
+            response.entities_detected &&
+            Object.keys(response.entities_detected).length > 0
+          ) {
+            updateMemoryWithEntities(response.entities_detected);
+          } else {
+            // Fall back to keyword detection if no entities
+            updateMemoryIndicator(userMessage);
+          }
+        },
+        error: function (xhr) {
+          hideTypingIndicator();
+
+          let errorMessage =
+            "Sorry, there was an error processing your request.";
+          if (xhr.responseJSON && xhr.responseJSON.error) {
+            errorMessage = "Error: " + xhr.responseJSON.error;
+          }
+
+          addMessageToChat(errorMessage, "bot", true);
+        },
+      });
+    });
+
+    // Suggestion chips functionality
+    $(".suggestion-chip").on("click", function () {
+      const suggestionText = $(this).data("text");
+      $("#userMessage").val(suggestionText);
+      $("#chatForm").submit();
+    });
+
+    // Function to add message to chat
+    function addMessageToChat(message, sender, isError = false) {
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `message ${sender}`;
+
+      const contentDiv = document.createElement("div");
+      contentDiv.className = `message-content p-3 mb-2 rounded ${
+        sender === "bot"
+          ? isError
+            ? "bg-danger text-white"
+            : "bg-light"
+          : "bg-info text-white"
+      }`;
+
+      const icon = document.createElement("i");
+      icon.className = `fas fa-${sender === "bot" ? "robot" : "user"} mr-2`;
+      if (sender === "bot" && !isError) {
+        icon.classList.add("text-info");
+      }
+
+      contentDiv.appendChild(icon);
+      contentDiv.appendChild(document.createTextNode(message));
+      messageDiv.appendChild(contentDiv);
+
+      document.getElementById("chatContainer").appendChild(messageDiv);
+
+      // Scroll to bottom
+      scrollToBottom();
+    }
+
+    // Function to show typing indicator
+    function showTypingIndicator() {
+      const typingDiv = document.createElement("div");
+      typingDiv.className = "message bot";
+      typingDiv.id = "typingIndicator";
+
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "message-content p-3 mb-2 rounded bg-light";
+
+      const icon = document.createElement("i");
+      icon.className = "fas fa-robot mr-2 text-info";
+
+      const typingContainer = document.createElement("div");
+      typingContainer.className = "typing-indicator d-inline-block";
+
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement("span");
+        typingContainer.appendChild(dot);
+      }
+
+      contentDiv.appendChild(icon);
+      contentDiv.appendChild(typingContainer);
+      typingDiv.appendChild(contentDiv);
+
+      document.getElementById("chatContainer").appendChild(typingDiv);
+
+      // Scroll to bottom
+      scrollToBottom();
+    }
+
+    // Function to hide typing indicator
+    function hideTypingIndicator() {
+      const typingIndicator = document.getElementById("typingIndicator");
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+    }
+
+    // Function to update memory indicator based on user message
+    function updateMemoryIndicator(message) {
+      const lowerMessage = message.toLowerCase();
+      const symptomKeywords = [
+        "headache",
+        "pain",
+        "fever",
+        "cough",
+        "cold",
+        "nausea",
+        "dizzy",
+        "tired",
+        "sore",
+      ];
+
+      let newSymptoms = [];
+      symptomKeywords.forEach((symptom) => {
+        if (
+          lowerMessage.includes(symptom) &&
+          !reportedSymptoms.includes(symptom)
+        ) {
+          newSymptoms.push(symptom);
+          reportedSymptoms.push(symptom);
+        }
+      });
+
+      if (newSymptoms.length > 0) {
+        $("#memoryStatus").html(
+          `<span class="text-info">I'll remember that you mentioned: ${newSymptoms.join(
+            ", "
+          )}</span>`
+        );
+        $("#contextBadge").addClass("badge-pulse");
+        setTimeout(() => {
+          $("#contextBadge").removeClass("badge-pulse");
+        }, 3000);
+      } else if (reportedSymptoms.length > 0) {
+        $("#memoryStatus").text(
+          `I remember your symptoms: ${reportedSymptoms.join(", ")}`
+        );
+      }
+    }
+
+    // Function to update memory with detected entities
+    function updateMemoryWithEntities(entities) {
+      let newEntityInfo = [];
+
+      // Process symptoms
+      if (entities.symptoms && entities.symptoms.length > 0) {
+        entities.symptoms.forEach((symptom) => {
+          if (!reportedSymptoms.includes(symptom)) {
+            reportedSymptoms.push(symptom);
+            newEntityInfo.push(symptom);
+          }
+        });
+      }
+
+      // Process medical conditions if present
+      if (entities.conditions && entities.conditions.length > 0) {
+        entities.conditions.forEach((condition) => {
+          newEntityInfo.push(`medical condition: ${condition}`);
+        });
+      }
+
+      if (newEntityInfo.length > 0) {
+        $("#memoryStatus").html(
+          `<span class="text-info">I'll remember that you mentioned: ${newEntityInfo.join(
+            ", "
+          )}</span>`
+        );
+        $("#contextBadge").addClass("badge-pulse");
+        setTimeout(() => {
+          $("#contextBadge").removeClass("badge-pulse");
+        }, 3000);
+      } else if (reportedSymptoms.length > 0) {
+        $("#memoryStatus").text(
+          `I remember your symptoms: ${reportedSymptoms.join(", ")}`
+        );
+      }
+    }
+
+    // Function to update language indicator
+    function updateLanguageIndicator(language) {
+      const languageNames = {
+        en: "English",
+        hi: "Hindi",
+        es: "Spanish",
+        fr: "French",
+        de: "German",
+      };
+
+      const languageName = languageNames[language] || language;
+
+      // Add or update language badge next to context badge
+      if ($("#languageBadge").length) {
+        $("#languageBadge").text(`${languageName}`);
+      } else {
+        $("#contextBadge").after(`
+                    <span class="badge badge-pill badge-warning ml-1" id="languageBadge" data-toggle="tooltip" 
+                          title="Assistant detected language">
+                        <i class="fas fa-language mr-1"></i>${languageName}
+                    </span>
+                `);
+        $('[data-toggle="tooltip"]').tooltip();
+      }
+    }
+
+    // Function to scroll chat to bottom
+    function scrollToBottom() {
+      const chatContainer = document.getElementById("chatContainer");
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  });
+</script>
+
+<style>
+  /* Chat message styles */
+  .message {
+    margin-bottom: 15px;
+  }
+
+  .message.user {
+    text-align: right;
+  }
+
+  .message-content {
+    display: inline-block;
+    max-width: 80%;
+    word-break: break-word;
+  }
+
+  .message.user .message-content {
+    border-top-right-radius: 20px !important;
+    border-bottom-left-radius: 20px !important;
+    border-top-left-radius: 20px !important;
+    border-bottom-right-radius: 0 !important;
+    text-align: left;
+  }
+
+  .message.bot .message-content {
+    border-top-left-radius: 20px !important;
+    border-bottom-right-radius: 20px !important;
+    border-top-right-radius: 20px !important;
+    border-bottom-left-radius: 0 !important;
+  }
+
+  /* Typing indicator animation */
+  .typing-indicator {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .typing-indicator span {
+    height: 8px;
+    width: 8px;
+    background: #17a2b8;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 2px;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+
+  .typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+  }
+
+  /* Badge pulse animation */
+  .badge-pulse {
+    animation: badge-pulse 2s infinite;
+  }
+
+  @keyframes badge-pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Suggestion chips */
+  .suggestion-chip {
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 50px;
+  }
+
+  .suggestion-chip:hover {
+    background-color: #17a2b8;
+    color: white;
+  }
+</style>
+{% endblock %}

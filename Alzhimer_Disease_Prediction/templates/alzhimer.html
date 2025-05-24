@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alzheimer's Prediction</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 600px;
+      }
+
+      h2 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 2rem;
+        font-weight: 600;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #34495e;
+        font-weight: 500;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.8rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      }
+
+      input::placeholder {
+        color: #95a5a6;
+      }
+
+      button {
+        width: 100%;
+        padding: 1rem;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      button:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+      }
+
+      .result {
+        margin-top: 2rem;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 500;
+      }
+
+      .result.high-risk {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+
+      .result.low-risk {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+
+      .result.error {
+        background: #fef3c7;
+        color: #d97706;
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 1.5rem;
+        }
+
+        h2 {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Alzheimer's Risk Prediction</h2>
+      <form method="POST">
+        <datalist id="age">
+          <option value="73"></option>
+          <option value="69"></option>
+        </datalist>
+
+        <datalist id="FamilyHistoryAlzheimers">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="Depression">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="HeadInjury">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="Hypertension">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="MMSE">
+          <option value="21"></option>
+          <option value="22"></option>
+        </datalist>
+
+        <datalist id="MemoryComplaints">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="BehavioralProblems">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="ADL">
+          <option value="1"></option>
+          <option value="2"></option>
+          <option value="3"></option>
+          <option value="4"></option>
+          <option value="5"></option>
+          <option value="6"></option>
+          <option value="7"></option>
+          <option value="8"></option>
+          <option value="9"></option>
+        </datalist>
+
+        <datalist id="Confusion">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="Disorientation">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="PersonalityChanges">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="DifficultyCompletingTasks">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <datalist id="Forgetfulness">
+          <option value="0"></option>
+          <option value="1"></option>
+        </datalist>
+
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" name="Age" list="age" required />
+        </div>
+        <div class="form-group">
+          <label>Family History of Alzheimer's</label>
+          <input
+            type="number"
+            name="FamilyHistoryAlzheimers"
+            list="FamilyHistoryAlzheimers"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Depression</label>
+          <input type="number" name="Depression" list="Depression" required />
+        </div>
+        <div class="form-group">
+          <label>Head Injury</label>
+          <input type="number" name="HeadInjury" list="HeadInjury" required />
+        </div>
+        <div class="form-group">
+          <label>Hypertension</label>
+          <input
+            type="number"
+            name="Hypertension"
+            list="Hypertension"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>MMSE Score</label>
+          <input type="number" name="MMSE" list="MMSE" required />
+        </div>
+        <div class="form-group">
+          <label>Memory Complaints</label>
+          <input
+            type="number"
+            name="MemoryComplaints"
+            list="MemoryComplaints"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Behavioral Problems</label>
+          <input
+            type="number"
+            name="BehavioralProblems"
+            list="BehavioralProblems"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Activities of Daily Living (ADL)</label>
+          <input type="number" name="ADL" list="ADL" required />
+        </div>
+        <div class="form-group">
+          <label>Confusion</label>
+          <input type="number" name="Confusion" list="Confusion" required />
+        </div>
+        <div class="form-group">
+          <label>Disorientation</label>
+          <input
+            type="number"
+            name="Disorientation"
+            list="Disorientation"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Personality Changes</label>
+          <input
+            type="number"
+            name="PersonalityChanges"
+            list="PersonalityChanges"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Difficulty Completing Tasks</label>
+          <input
+            type="number"
+            name="DifficultyCompletingTasks"
+            list="DifficultyCompletingTasks"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Forgetfulness</label>
+          <input
+            type="number"
+            name="Forgetfulness"
+            list="Forgetfulness"
+            required
+          />
+        </div>
+
+        <button type="submit">Predict</button>
+      </form>
+
+      {% if prediction %}
+      <div
+        class="result {% if 'High Risk' in prediction %}high-risk{% elif 'Low Risk' in prediction %}low-risk{% else %}error{% endif %}"
+      >
+        {{ prediction }}
+      </div>
+      {% endif %}
+    </div>
+  </body>
+</html>

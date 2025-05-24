@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Disease Predictor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #9ee7ee, #8fb8f2);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-size: 400% 400%;
+        animation: gradientMove 15s ease infinite;
+      }
+
+      @keyframes gradientMove {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      h2 {
+        font-size: 2.5rem;
+        color: #ff6347;
+        text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+        font-family: "Arial", sans-serif;
+      }
+
+      .card-custom {
+        background-color: #fff;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        border: 3px solid transparent;
+        transition: transform 0.3s ease;
+      }
+
+      .card-custom:hover {
+        transform: translateY(-6px);
+      }
+
+      .card-icon {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: #fff;
+      }
+
+      .btn-custom {
+        border-radius: 2rem;
+        padding: 0.4rem 1.2rem;
+        color: #fff;
+        border: none;
+      }
+
+      .green-border {
+        border-color: #34c759 !important;
+      }
+
+      .blue-border {
+        border-color: #007aff !important;
+      }
+
+      .red-border {
+        border-color: #e74c3c !important;
+      }
+
+      .orange-border {
+        border-color: #f39c12 !important;
+      }
+
+      .purple-border {
+        border-color: #8e44ad !important;
+      }
+      .teal-border {
+        border-color: #1abc9c !important; /* Teal color */
+      }
+      .pink-border {
+        border-color: #ff69b4 !important; /* Pink color */
+      }
+      .tomato-border {
+        border-color: #f23d55 !important; /* Tomato color */
+      }
+      .green-bg {
+        background-color: #34c759;
+      }
+      .teal-bg {
+        background-color: #1abc9c;
+      }
+      .tomato-bg {
+        background-color: #f23d55;
+      }
+      .pink-bg {
+        background-color: #ff69b4;
+      }
+      .blue-bg {
+        background-color: #007aff;
+      }
+
+      .red-bg {
+        background-color: #e74c3c;
+      }
+
+      .orange-bg {
+        background-color: #f39c12;
+      }
+
+      .purple-bg {
+        background-color: #8e44ad;
+      }
+
+      .container {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container text-center">
+      <div
+        style="
+          display: inline-block;
+          padding: 30px 60px;
+          margin: 30px;
+          height: 100px;
+          background-color: #f5e6ff;
+          border-radius: 50px;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          cursor: pointer;
+        "
+        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.2)'"
+        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0, 0, 0, 0.1)'"
+      >
+        <h2 class="fw-bold mb-5" style="margin: 0">
+          Choose a Disease to Predict
+        </h2>
+      </div>
+
+      <div class="row g-4 justify-content-center">
+        <!-- Diabetes -->
+        <div class="col-md-4">
+          <div class="card-custom green-border">
+            <div class="card-body text-center">
+              <div class="card-icon green-bg">
+                <i class="fas fa-syringe"></i>
+              </div>
+              <h5 class="card-title">Diabetes</h5>
+              <p class="card-text">
+                Predict your risk for diabetes using medical inputs.
+              </p>
+              <a href="/users/diabetes" class="btn btn-custom green-bg"
+                >Predict</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Heart Disease -->
+        <div class="col-md-4">
+          <div class="card-custom red-border">
+            <div class="card-body text-center">
+              <div class="card-icon red-bg">
+                <i class="fas fa-heartbeat"></i>
+              </div>
+              <h5 class="card-title">Heart Disease</h5>
+              <p class="card-text">
+                Assess heart disease risk with our ML model.
+              </p>
+              <a href="/users/heart" class="btn btn-custom red-bg">Predict</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liver Disease -->
+        <div class="col-md-4">
+          <div class="card-custom orange-border">
+            <div class="card-body text-center">
+              <div class="card-icon orange-bg">
+                <i class="fas fa-flask"></i>
+              </div>
+              <h5 class="card-title">Liver Disease</h5>
+              <p class="card-text">
+                Evaluate liver condition based on health metrics.
+              </p>
+              <a href="/users/liver" class="btn btn-custom orange-bg"
+                >Predict</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Stroke -->
+        <div class="col-md-4">
+          <div class="card-custom purple-border">
+            <div class="card-body text-center">
+              <div class="card-icon purple-bg">
+                <i class="fas fa-brain"></i>
+              </div>
+              <h5 class="card-title">Stroke Risk</h5>
+              <p class="card-text">
+                Find out if you're at risk of stroke with a few questions.
+              </p>
+              <a href="/users/stroke" class="btn btn-custom purple-bg"
+                >Predict</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Alzheimer -->
+        <div class="col-md-4">
+          <div class="card-custom blue-border">
+            <div class="card-body text-center">
+              <div class="card-icon blue-bg">
+                <i class="fas fa-user-clock"></i>
+              </div>
+              <h5 class="card-title">Alzheimer</h5>
+              <p class="card-text">
+                Check for early signs of Alzheimer’s using ML tools.
+              </p>
+              <a href="/users/alzhimer" class="btn btn-custom blue-bg"
+                >Predict</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Parkinson -->
+        <div class="col-md-4">
+          <div class="card-custom" style="border: 2px solid #89dc45">
+            <div class="card-body text-center" style="min-height: 210px">
+              <div class="card-icon" style="background-color: #89dc45">
+                <i class="fas fa-walking"></i>
+              </div>
+              <h5 class="card-title">Parkinson's</h5>
+              <p class="card-text">
+                Assess the likelihood of Parkinson's disease.
+              </p>
+              <a
+                href="/users/parkinsons"
+                class="btn btn-custom"
+                style="background-color: #89dc45; color: white"
+                >Predict</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Anemia -->
+        <div class="col-md-4">
+          <div class="card-custom teal-border">
+            <div class="card-body text-center">
+              <div class="card-icon teal-bg">
+                <i class="fas fa-tint"></i>
+              </div>
+              <h5 class="card-title">Anemia</h5>
+              <p class="card-text">
+                Check for anemia based on basic blood test inputs.
+              </p>
+              <a href="/users/anemia" class="btn btn-custom teal-bg">Predict</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Asthma -->
+        <div class="col-md-4">
+          <div class="card-custom pink-border">
+            <div class="card-body text-center">
+              <div class="card-icon pink-bg">
+                <i class="fas fa-lungs"></i>
+              </div>
+              <h5 class="card-title">Asthma</h5>
+              <p class="card-text">
+                Check for asthma risk based on symptoms and lung function.
+              </p>
+              <a href="/users/asthma" class="btn btn-custom pink-bg">Predict</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- PCOS -->
+        <div class="col-md-4">
+          <div class="card-custom tomato-border">
+            <div class="card-body text-center">
+              <div class="card-icon tomato-bg">
+                <i class="fas fa-female"></i>
+              </div>
+              <h5 class="card-title">PCOS</h5>
+              <p class="card-text">
+                Check for PCOS risk based on symptoms and hormonal imbalances.
+              </p>
+              <a href="/users/pcos" class="btn btn-custom tomato-bg">Predict</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

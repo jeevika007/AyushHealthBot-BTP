@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comment mr-2"></i>AyushHealthBot Assistant
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chat-area" id="chatArea" style="height: 400px; overflow-y: auto;">
+                        <!-- Chat history will be displayed here -->
+                        {% if chat_history %}
+                            {% for message in chat_history %}
+                                <div class="message {% if message.is_bot %}bot{% else %}user{% endif %}">
+                                    <div class="message-content p-2 mb-2 rounded {% if message.is_bot %}bg-light{% else %}bg-primary text-white{% endif %}">
+                                        {% if message.is_bot %}
+                                            <i class="fas fa-robot mr-2"></i>
+                                        {% else %}
+                                            <i class="fas fa-user mr-2"></i>
+                                        {% endif %}
+                                        {{ message.content }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="message bot">
+                                <div class="message-content p-2 mb-2 rounded bg-light">
+                                    <i class="fas fa-robot mr-2"></i>
+                                    Hello! I'm your AyushHealthBot assistant. How can I help you today?
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="chat-input mt-3">
+                        <form id="chatForm" class="d-flex">
+                            <input type="hidden" id="conversationId" value="{{ conversation_id }}">
+                            <input type="text" id="userMessage" class="form-control" placeholder="Type your message..." required>
+                            <button type="submit" class="btn btn-primary ml-2">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>
+                        <i class="fas fa-info-circle mr-1"></i>
+                        This chatbot provides general health information. For medical emergencies, please consult a doctor.
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Quick suggestions -->
+            <div class="quick-suggestions mt-3">
+                <p class="text-muted mb-2">Suggested questions:</p>
+                <div class="d-flex flex-wrap">
+                    <button class="btn btn-sm btn-outline-secondary m-1 suggestion-chip" data-text="What can you help me with?">
+                        What can you help me with?
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary m-1 suggestion-chip" data-text="How do I book an appointment?">
+                        How do I book an appointment?
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary m-1 suggestion-chip" data-text="What symptoms should I watch for with a cold?">
+                        Cold symptoms?
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary m-1 suggestion-chip" data-text="How do I check my symptoms?">
+                        How do I check my symptoms?
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatForm = document.getElementById('chatForm');
+    const userMessageInput = document.getElementById('userMessage');
+    const chatArea = document.getElementById('chatArea');
+    const conversationId = document.getElementById('conversationId').value;
+    
+    // Scroll to bottom of chat area
+    chatArea.scrollTop = chatArea.scrollHeight;
+    
+    // Handle suggestion chips
+    document.querySelectorAll('.suggestion-chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            userMessageInput.value = this.getAttribute('data-text');
+            chatForm.dispatchEvent(new Event('submit'));
+        });
+    });
+    
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const userMessage = userMessageInput.value.trim();
+        if (!userMessage) return;
+        
+        // Add user message to chat
+        addMessageToChat(userMessage, false);
+        
+        // Clear input
+        userMessageInput.value = '';
+        
+        // Send message to server
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: userMessage,
+                conversation_id: conversationId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error:', data.error);
+                addMessageToChat('Sorry, there was an error processing your message. Please try again.', true);
+            } else {
+                addMessageToChat(data.response, true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            addMessageToChat('Sorry, there was an error connecting to the server. Please try again.', true);
+        });
+    });
+    
+    function addMessageToChat(message, isBot) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isBot ? 'bot' : 'user'}`;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = `message-content p-2 mb-2 rounded ${isBot ? 'bg-light' : 'bg-primary text-white'}`;
+        
+        const icon = document.createElement('i');
+        icon.className = `fas fa-${isBot ? 'robot' : 'user'} mr-2`;
+        
+        contentDiv.appendChild(icon);
+        contentDiv.appendChild(document.createTextNode(message));
+        messageDiv.appendChild(contentDiv);
+        
+        chatArea.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+});
+</script>
+
+<style>
+.message {
+    margin-bottom: 10px;
+}
+
+.message.user {
+    text-align: right;
+}
+
+.message-content {
+    display: inline-block;
+    max-width: 80%;
+    border-radius: 10px !important;
+}
+
+.message.user .message-content {
+    border-bottom-right-radius: 0 !important;
+}
+
+.message.bot .message-content {
+    border-bottom-left-radius: 0 !important;
+}
+
+.suggestion-chip {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.suggestion-chip:hover {
+    background-color: #6c757d;
+    color: white;
+}
+</style>
+{% endblock %} 

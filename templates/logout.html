@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Logged Out{% endblock %}
+
+{% block content %}
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+<h2>You have been logged out.</h2>
+<a href="/">Return to Home</a>
+{% endblock %}

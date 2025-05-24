@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diabetes Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        input::placeholder {
+            color: #95a5a6;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .result {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .result.high-risk {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .result.low-risk {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .result.error {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Diabetes Prediction</h2>
+        <form method="POST">
+            <!-- Datalists for input suggestions -->
+            <datalist id="pregnancies_values">1,89,66,23,94,28.1,0.167,21,0
+                <option value="6">
+                <option value="1">
+            </datalist>
+
+            <datalist id="glucose_values">
+                <option value="148">
+                <option value="89">
+            </datalist>
+
+            <datalist id="blood_pressure_values">
+                <option value="72">
+                <option value="66">
+            </datalist>
+
+            <datalist id="skin_thickness_values">
+                <option value="35">
+                <option value="23">
+            </datalist>
+
+            <datalist id="insulin_values">
+                <option value="0">
+                <option value="94">
+            </datalist>
+
+            <datalist id="bmi_values">
+                <option value="33.6">
+                <option value="28.1">
+            </datalist>
+
+            <datalist id="diabetes_pedigree_function_values">
+                <option value="0.627">
+                <option value="0.167">
+            </datalist>
+
+            <datalist id="age_values">
+                <option value="50">
+                <option value="21">
+            </datalist>
+
+            <!-- Form fields with datalist references -->
+            <div class="form-group">
+                <label>Pregnancies</label>
+                <input type="number" name="pregnancies" list="pregnancies_values" placeholder="Number of times pregnant (e.g., 6, 1, 8)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Glucose</label>
+                <input type="number" name="glucose" list="glucose_values" placeholder="2-hour glucose tolerance test result (e.g., 148, 85, 183)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Blood Pressure</label>
+                <input type="number" name="blood_pressure" list="blood_pressure_values" placeholder="Diastolic blood pressure (e.g., 72, 66, 64)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Skin Thickness</label>
+                <input type="number" name="skin_thickness" list="skin_thickness_values" placeholder="Triceps skin fold thickness (e.g., 35, 29, 0)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Insulin</label>
+                <input type="number" name="insulin" list="insulin_values" placeholder="2-hour serum insulin (e.g., 0, 26, 23)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>BMI</label>
+                <input type="number" step="any" name="bmi" list="bmi_values" placeholder="Body mass index (e.g., 33.6, 26.6, 23.3)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Diabetes Pedigree Function</label>
+                <input type="number" step="any" name="diabetes_pedigree_function" list="diabetes_pedigree_function_values" placeholder="Diabetes pedigree function (e.g., 0.627, 0.351, 0.672)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Age</label>
+                <input type="number" name="age" list="age_values" placeholder="Age in years (e.g., 50, 31, 32)" required>
+            </div>
+            
+            <button type="submit">Predict</button>
+        </form>
+
+        {% if prediction %}
+        <div class="result {% if 'High Risk' in prediction %}high-risk{% elif 'Low Risk' in prediction %}low-risk{% else %}error{% endif %}">
+            {{ prediction }}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parkinson's Disease Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        input::placeholder {
+            color: #95a5a6;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .result {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .result.high-risk {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .result.low-risk {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .result.error {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <h2>Parkinson's Disease Prediction</h2>
+    <form method="POST">
+            <!-- Datalists for input suggestions -->
+            <datalist id="mdvp_fo_values">
+                <option value="119.992">
+                <option value="197.076">
+            </datalist>
+            
+            <datalist id="mdvp_fhi_values">
+                <option value="157.302">
+                <option value="206.896">
+            </datalist>
+
+            <datalist id="mdvp_flo_values">
+                <option value="74.997">
+                <option value="192.055">
+            </datalist>
+
+            <datalist id="mdvp_jitter_values">
+                <option value="0.00784">
+                <option value="0.00289">
+            </datalist>
+
+            <datalist id="mdvp_shimmer_values">
+                <option value="0.04374">
+                <option value="0.01098">
+            </datalist>
+
+            <datalist id="hnr_values">
+                <option value="21.033">
+                <option value="26.775">
+            </datalist>
+
+            <datalist id="rpde_values">
+                <option value="0.414783">
+                <option value="0.422229">
+            </datalist>
+
+            <datalist id="dfa_values">
+                <option value="0.815285">
+                <option value="0.741367">
+            </datalist>
+
+            <datalist id="spread1_values">
+                <option value="4.813031">
+                <option value="7.3483">
+            </datalist>
+
+            <datalist id="spread2_values">
+                <option value="0.266482">
+                <option value="0.177551">
+            </datalist>
+
+            <!-- Form fields with datalist references - Only the 10 required features -->
+            <div class="form-group">
+                <label>MDVP:Fo (Hz):</label>
+                <input type="number" step="any" name="mdvp_fo" list="mdvp_fo_values" placeholder="Average vocal fundamental frequency (e.g., 119.992, 122.400)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>MDVP:Fhi (Hz):</label>
+                <input type="number" step="any" name="mdvp_fhi" list="mdvp_fhi_values" placeholder="Maximum vocal fundamental frequency (e.g., 157.302, 148.650)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>MDVP:Flo (Hz):</label>
+                <input type="number" step="any" name="mdvp_flo" list="mdvp_flo_values" placeholder="Minimum vocal fundamental frequency (e.g., 74.997, 113.050)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>MDVP:Jitter (%):</label>
+                <input type="number" step="any" name="mdvp_jitter" list="mdvp_jitter_values" placeholder="Variation in fundamental frequency (e.g., 0.00784, 0.00968)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>MDVP:Shimmer:</label>
+                <input type="number" step="any" name="mdvp_shimmer" list="mdvp_shimmer_values" placeholder="Variation in amplitude (e.g., 0.04374, 0.06134)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>HNR:</label>
+                <input type="number" step="any" name="hnr" list="hnr_values" placeholder="Harmonics-to-noise ratio (e.g., 21.033, 24.023)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>RPDE:</label>
+                <input type="number" step="any" name="rpde" list="rpde_values" placeholder="Recurrence period density entropy (e.g., 0.414783, 0.458359)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>DFA:</label>
+                <input type="number" step="any" name="dfa" list="dfa_values" placeholder="Detrended fluctuation analysis (e.g., 0.815285, 0.784569)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Spread1:</label>
+                <input type="number" step="any" name="spread1" list="spread1_values" placeholder="Nonlinear measure of fundamental frequency variation (e.g., -4.813031, -4.075192)" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Spread2:</label>
+                <input type="number" step="any" name="spread2" list="spread2_values" placeholder="Nonlinear measure of fundamental frequency variation (e.g., 0.266482, 0.335590)" required>
+            </div>
+            
+        <button type="submit">Predict</button>
+    </form>
+    {% if prediction %}
+            <div class="result {% if 'Parkinson' in prediction %}positive{% else %}negative{% endif %}">
+                {{ prediction }}
+            </div>
+    {% endif %}
+    </div>
+</body>
+</html>
+

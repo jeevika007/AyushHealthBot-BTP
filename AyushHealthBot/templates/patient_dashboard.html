@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Welcome, {{ user.username }}!</h2>
+            <p class="text-muted">Patient Dashboard</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('users.old_ui') }}" class="btn btn-outline-primary btn-block mb-3">
+                        <i class="fas fa-stethoscope mr-2"></i>Test/Examine
+                    </a>
+                    <button class="btn btn-outline-success btn-block" data-toggle="modal" data-target="#askDoctorModal">
+                        <i class="fas fa-user-md mr-2"></i>Consult Doctor
+                    </button>
+                    
+                    <!-- Added Chat Assistant Button -->
+                    <button class="btn btn-outline-info btn-block mt-3" data-toggle="modal" data-target="#chatAssistantModal">
+                        <i class="fas fa-robot mr-2"></i>Chat with Assistant
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rest of your existing code remains unchanged -->
+        <!-- ... existing code ... -->
+    </div>
+
+    <!-- ... existing code ... -->
+</div>
+
+<!-- Chat Assistant Modal -->
+<div class="modal fade" id="chatAssistantModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-robot mr-2"></i>AyushHealthBot Assistant
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-container" style="height: 400px; overflow-y: auto; padding: 15px;" id="chatMessages">
+                    <!-- Chat messages will be displayed here -->
+                    <div class="text-center text-muted mb-3">
+                        <small>Your conversation with AyushHealthBot is private and secure.</small>
+                    </div>
+                </div>
+                <div class="chat-input mt-3">
+                    <form id="chatForm" class="d-flex">
+                        <input type="text" class="form-control" id="messageInput" placeholder="Type your message..." required>
+                        <button type="submit" class="btn btn-primary ml-2">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <small class="text-muted">This chatbot provides general health information. For medical emergencies, please consult a doctor.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Your existing Ask Doctor Modal -->
+<!-- ... existing code ... -->
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Load chat history when chat modal is opened
+        $('#chatAssistantModal').on('shown.bs.modal', function() {
+            loadChatHistory();
+            scrollToBottom();
+        });
+        
+        // Handle chat form submission
+        $('#chatForm').on('submit', function(e) {
+            e.preventDefault();
+            const message = $('#messageInput').val().trim();
+            
+            if (message) {
+                // Add user message to chat
+                addMessageToChat('user', message);
+                
+                // Clear input
+                $('#messageInput').val('');
+                
+                // Show typing indicator
+                addTypingIndicator();
+                
+                // Send message to server
+                $.ajax({
+                    url: '/chat/send',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ message: message }),
+                    success: function(response) {
+                        // Remove typing indicator
+                        removeTypingIndicator();
+                        
+                        // Add bot response to chat
+                        addMessageToChat('bot', response.message);
+                    },
+                    error: function() {
+                        // Remove typing indicator
+                        removeTypingIndicator();
+                        
+                        // Show error message
+                        addMessageToChat('bot', 'Sorry, there was an error connecting to the server. Please try again.');
+                    }
+                });
+            }
+        });
+        
+        // Function to load chat history
+        function loadChatHistory() {
+            $('#chatMessages').html('<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></div>');
+            
+            $.ajax({
+                url: '/chat/history',
+                type: 'GET',
+                success: function(response) {
+                    $('#chatMessages').empty();
+                    
+                    if (response.history.length === 0) {
+                        // Welcome message if no history
+                        $('#chatMessages').html(`
+                            <div class="text-center text-muted mb-3">
+                                <small>Your conversation with AyushHealthBot is private and secure.</small>
+                            </div>
+                            <div class="chat-message bot-message">
+                                <div class="message-content">
+                                    <i class="fas fa-robot mr-2"></i>
+                                    <span>Hello! I'm your AyushHealthBot assistant. How can I help you today?</span>
+                                </div>
+                            </div>
+                        `);
+                    } else {
+                        // Add header
+                        $('#chatMessages').html(`
+                            <div class="text-center text-muted mb-3">
+                                <small>Your conversation with AyushHealthBot is private and secure.</small>
+                            </div>
+                        `);
+                        
+                        // Add messages from history
+                        response.history.forEach(function(msg) {
+                            addMessageToChat(msg.sender, msg.message, false);
+                        });
+                    }
+                    
+                    scrollToBottom();
+                },
+                error: function() {
+                    $('#chatMessages').html(`
+                        <div class="text-center text-danger">
+                            <p>Failed to load chat history. Please try again.</p>
+                        </div>
+                    `);
+                }
+            });
+        }
+        
+        // Function to add message to chat
+        function addMessageToChat(sender, message, scroll = true) {
+            const messageClass = sender === 'user' ? 'user-message' : 'bot-message';
+            const alignment = sender === 'user' ? 'justify-content-end' : 'justify-content-start';
+            const icon = sender === 'user' ? '<i class="fas fa-user mr-2"></i>' : '<i class="fas fa-robot mr-2"></i>';
+            
+            const messageHtml = `
+                <div class="d-flex ${alignment} mb-3">
+                    <div class="chat-message ${messageClass}">
+                        <div class="message-content">
+                            ${sender === 'user' ? '' : icon}
+                            <span>${message}</span>
+                            ${sender === 'user' ? icon : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#chatMessages').append(messageHtml);
+            
+            if (scroll) {
+                scrollToBottom();
+            }
+        }
+        
+        // Function to add typing indicator
+        function addTypingIndicator() {
+            const typingHtml = `
+                <div class="d-flex justify-content-start mb-3" id="typingIndicator">
+                    <div class="chat-message bot-message">
+                        <div class="message-content">
+                            <i class="fas fa-robot mr-2"></i>
+                            <span>
+                                <div class="typing-indicator">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#chatMessages').append(typingHtml);
+            scrollToBottom();
+        }
+        
+        // Function to remove typing indicator
+        function removeTypingIndicator() {
+            $('#typingIndicator').remove();
+        }
+        
+        // Function to scroll to bottom of chat
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chatMessages');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    });
+</script>
+
+<style>
+    .chat-message {
+        max-width: 70%;
+        padding: 10px 15px;
+        border-radius: 15px;
+        margin-bottom: 5px;
+    }
+    
+    .user-message {
+        background-color: #007bff;
+        color: white;
+        border-top-right-radius: 5px;
+    }
+    
+    .bot-message {
+        background-color: #f1f1f1;
+        color: #333;
+        border-top-left-radius: 5px;
+    }
+    
+    .message-content {
+        word-break: break-word;
+    }
+    
+    /* Typing indicator */
+    .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background-color: #777;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 2px;
+        animation: typing 1s infinite ease-in-out;
+    }
+    
+    .typing-indicator span:nth-child(1) {
+        animation-delay: 0s;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+        100% { transform: translateY(0px); }
+    }
+</style>
+{% endblock %}

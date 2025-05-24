@@ -1,0 +1,110 @@
+<!-- doctor_dashboard.html -->
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard - Ayush Health Bot{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Welcome, Dr. {{ current_user.username }}!</h2>
+            <p class="text-muted">Specialization: {{ current_user.specialization }}</p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Patient Queries Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle mr-2"></i>Patient Queries
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if questions %}
+                        <div class="list-group">
+                            {% for question in questions %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">{{ question.title }}</h6>
+                                    {% if question.urgent %}
+                                        <span class="badge badge-danger">Urgent</span>
+                                    {% endif %}
+                                </div>
+                                <p class="mb-1">{{ question.description }}</p>
+                                <small class="text-muted">From: {{ question.patient.username }}</small>
+                                {% if not question.answered %}
+                                    <form action="{{ url_for('doctors.answer_question', question_id=question.id) }}" method="POST" class="mt-2">
+                                        <div class="form-group">
+                                            <textarea class="form-control" name="answer" rows="2" placeholder="Type your answer..." required></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-sm btn-primary">Submit Answer</button>
+                                    </form>
+                                {% else %}
+                                    <div class="mt-2">
+                                        <strong>Your Answer:</strong>
+                                        <p class="mb-0">{{ question.answer }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted mb-0">No pending queries</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar-check mr-2"></i>Appointments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if appointments %}
+                        <div class="list-group">
+                            {% for appointment in appointments %}
+                            <div class="list-group-item">
+                                <h6 class="mb-1">Patient: {{ appointment.patient.username }}</h6>
+                                <p class="mb-1">
+                                    <i class="far fa-calendar mr-1"></i>
+                                    {{ appointment.appointment_date.strftime('%Y-%m-%d %H:%M') }}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Status: 
+                                        {% if appointment.status == 'pending' %}
+                                            <span class="text-warning">Pending</span>
+                                        {% elif appointment.status == 'confirmed' %}
+                                            <span class="text-success">Confirmed</span>
+                                        {% else %}
+                                            <span class="text-danger">Cancelled</span>
+                                        {% endif %}
+                                    </small>
+                                    {% if appointment.status == 'pending' %}
+                                        <div class="btn-group">
+                                            <form action="{{ url_for('doctors.update_appointment', appointment_id=appointment.id) }}" method="POST" class="d-inline">
+                                                <input type="hidden" name="status" value="confirmed">
+                                                <button type="submit" class="btn btn-sm btn-success mr-1">Accept</button>
+                                            </form>
+                                            <form action="{{ url_for('doctors.update_appointment', appointment_id=appointment.id) }}" method="POST" class="d-inline">
+                                                <input type="hidden" name="status" value="cancelled">
+                                                <button type="submit" class="btn btn-sm btn-danger">Decline</button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted mb-0">No appointments scheduled</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

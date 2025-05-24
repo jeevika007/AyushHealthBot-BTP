@@ -1,0 +1,530 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-robot mr-2"></i>Context-Aware Health Assistant
+                    </h5>
+                    <div class="chat-badges">
+                        <span class="badge badge-pill badge-light" id="contextBadge" data-toggle="tooltip" title="This assistant remembers symptoms and information from your conversation">
+                            <i class="fas fa-memory mr-1"></i>Context-Aware
+                        </span>
+                        <span class="badge badge-pill badge-light" data-toggle="tooltip" title="Powered by advanced AI">
+                            <i class="fas fa-brain mr-1"></i>AI-Powered
+                        </span>
+                        {% if current_user.is_authenticated %}
+                        <span class="badge badge-pill badge-success" data-toggle="tooltip" title="Your conversations are saved">
+                            <i class="fas fa-save mr-1"></i>Saved Chat
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="memory-indicator mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="memory-indicator-icon mr-2">
+                                <i class="fas fa-brain text-info"></i>
+                            </div>
+                            <div class="memory-indicator-text">
+                                <small class="text-muted" id="memoryStatus">Assistant is ready to help you</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-container" id="chatContainer" style="height: 450px; overflow-y: auto; padding: 15px; border: 1px solid #e0e0e0; border-radius: 5px; background-color: #f9f9f9;">
+                        <!-- Previous messages if any -->
+                        {% if chat_history %}
+                            {% for message in chat_history %}
+                                <div class="message {{ 'bot' if message.is_bot else 'user' }}">
+                                    <div class="message-content p-3 mb-2 rounded {{ 'bg-light' if message.is_bot else 'bg-info text-white' }}">
+                                        <i class="fas fa-{{ 'robot' if message.is_bot else 'user' }} mr-2 {{ 'text-info' if message.is_bot else '' }}"></i>
+                                        {{ message.content }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="message bot">
+                                <div class="message-content p-3 mb-2 rounded bg-light">
+                                    <i class="fas fa-robot mr-2 text-info"></i>
+                                    Hello! I'm your context-aware health assistant. I can remember our conversation and provide personalized health information. How can I help you today?
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <form id="chatForm" class="mt-3">
+                        <div class="input-group">
+                            <input type="text" id="userMessage" class="form-control" placeholder="Type your health question..." required>
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-info">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="conversationId" value="{{ conversation_id }}">
+                    </form>
+                    
+                    <!-- Quick suggestion chips -->
+                    <div class="suggestion-chips mt-3">
+                        <div class="d-flex flex-wrap">
+                            <button class="suggestion-chip btn btn-sm btn-outline-info m-1" data-text="I have a headache and fever">
+                                I have a headache and fever
+                            </button>
+                            <button class="suggestion-chip btn btn-sm btn-outline-info m-1" data-text="What should I take for a cough?">
+                                What should I take for a cough?
+                            </button>
+                            <button class="suggestion-chip btn btn-sm btn-outline-info m-1" data-text="Can you remind me of my previous symptoms?">
+                                Remind me of my symptoms
+                            </button>
+                            <button class="suggestion-chip btn btn-sm btn-outline-info m-1" data-text="मुझे सिरदर्द है">
+                                मुझे सिरदर्द है
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if current_user.is_authenticated %}
+                            <button id="newConversationBtn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-plus-circle mr-1"></i>New Conversation
+                            </button>
+                            <button id="viewHistoryBtn" class="btn btn-sm btn-outline-info ml-2">
+                                <i class="fas fa-history mr-1"></i>View History
+                            </button>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-lock mr-1"></i>Your conversation is private and secure
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal fade" id="historyModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Your Conversation History</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="conversationsList" class="list-group">
+                    <!-- Conversations will be loaded here -->
+                    <div class="text-center p-3">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading your conversations...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+        
+        // Chat functionality
+        let conversation_id = $('#conversationId').val();
+        let reportedSymptoms = [];
+        let currentLanguage = 'en';
+        
+        // Scroll to bottom of chat on load
+        scrollToBottom();
+        
+        // Handle chat form submission
+        $('#chatForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const userMessage = $('#userMessage').val().trim();
+            if (!userMessage) return;
+            
+            // Add user message to chat
+            addMessageToChat(userMessage, 'user');
+            
+            // Clear input
+            $('#userMessage').val('');
+            
+            // Add typing indicator
+            showTypingIndicator();
+            
+            // Send message to server
+            $.ajax({
+                url: '/api/send',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    message: userMessage,
+                    conversation_id: conversation_id
+                }),
+                success: function(response) {
+                    hideTypingIndicator();
+                    
+                    // Save conversation ID if it's new
+                    if (!conversation_id) {
+                        conversation_id = response.conversation_id;
+                        $('#conversationId').val(conversation_id);
+                        // Update URL without page reload
+                        window.history.pushState(
+                            {}, 
+                            document.title, 
+                            `/api/chat?conversation_id=${conversation_id}`
+                        );
+                    }
+                    
+                    // Update language indicator if language changed
+                    if (response.language && response.language !== currentLanguage) {
+                        currentLanguage = response.language;
+                        updateLanguageIndicator(currentLanguage);
+                    }
+                    
+                    // Add bot response to chat
+                    addMessageToChat(response.message, 'bot');
+                    
+                    // Update memory indicator with entities if detected
+                    if (response.entities_detected && Object.keys(response.entities_detected).length > 0) {
+                        updateMemoryWithEntities(response.entities_detected);
+                    } else {
+                        // Fall back to keyword detection if no entities
+                        updateMemoryIndicator(userMessage);
+                    }
+                },
+                error: function(xhr) {
+                    hideTypingIndicator();
+                    
+                    let errorMessage = 'Sorry, there was an error processing your request.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage = 'Error: ' + xhr.responseJSON.error;
+                    }
+                    
+                    addMessageToChat(errorMessage, 'bot', true);
+                }
+            });
+        });
+        
+        // Suggestion chips functionality
+        $('.suggestion-chip').on('click', function() {
+            const suggestionText = $(this).data('text');
+            $('#userMessage').val(suggestionText);
+            $('#chatForm').submit();
+        });
+        
+        // New conversation button
+        $('#newConversationBtn').on('click', function() {
+            if (confirm('Start a new conversation? Your current conversation will be saved.')) {
+                $.ajax({
+                    url: '/api/new_conversation',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ language: currentLanguage }),
+                    success: function(response) {
+                        // Redirect to new conversation
+                        window.location.href = `/api/chat?conversation_id=${response.conversation_id}`;
+                    },
+                    error: function() {
+                        alert('Error creating new conversation. Please try again.');
+                    }
+                });
+            }
+        });
+        
+        // View history button
+        $('#viewHistoryBtn').on('click', function() {
+            // Load conversations
+            $.ajax({
+                url: '/api/conversations',
+                type: 'GET',
+                success: function(response) {
+                    const conversationsList = $('#conversationsList');
+                    conversationsList.empty();
+                    
+                    if (response.conversations && response.conversations.length > 0) {
+                        response.conversations.forEach(conv => {
+                            // Format date
+                            const date = new Date(conv.last_updated);
+                            const formattedDate = date.toLocaleString();
+                            
+                            // Create element
+                            const item = $(`
+                                <a href="/api/chat?conversation_id=${conv.conversation_id}" 
+                                   class="list-group-item list-group-item-action ${conv.conversation_id === conversation_id ? 'active' : ''}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Conversation ${conv.conversation_id.substr(0, 8)}...</h6>
+                                        <span class="badge badge-${conv.conversation_id === conversation_id ? 'light' : 'info'}">
+                                            ${conv.language.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <small>${formattedDate}</small>
+                                </a>
+                            `);
+                            conversationsList.append(item);
+                        });
+                    } else {
+                        conversationsList.html('<p class="text-center p-3">No conversations found</p>');
+                    }
+                    
+                    $('#historyModal').modal('show');
+                },
+                error: function() {
+                    $('#conversationsList').html('<p class="text-center text-danger p-3">Error loading conversations</p>');
+                    $('#historyModal').modal('show');
+                }
+            });
+        });
+        
+        // Function to add message to chat
+        function addMessageToChat(message, sender, isError = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `message-content p-3 mb-2 rounded ${sender === 'bot' ? isError ? 'bg-danger text-white' : 'bg-light' : 'bg-info text-white'}`;
+            
+            const icon = document.createElement('i');
+            icon.className = `fas fa-${sender === 'bot' ? 'robot' : 'user'} mr-2`;
+            if (sender === 'bot' && !isError) {
+                icon.classList.add('text-info');
+            }
+            
+            contentDiv.appendChild(icon);
+            contentDiv.appendChild(document.createTextNode(message));
+            messageDiv.appendChild(contentDiv);
+            
+            document.getElementById('chatContainer').appendChild(messageDiv);
+            
+            // Scroll to bottom
+            scrollToBottom();
+        }
+        
+        // Function to show typing indicator
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot';
+            typingDiv.id = 'typingIndicator';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content p-3 mb-2 rounded bg-light';
+            
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-robot mr-2 text-info';
+            
+            const typingContainer = document.createElement('div');
+            typingContainer.className = 'typing-indicator d-inline-block';
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('span');
+                typingContainer.appendChild(dot);
+            }
+            
+            contentDiv.appendChild(icon);
+            contentDiv.appendChild(typingContainer);
+            typingDiv.appendChild(contentDiv);
+            
+            document.getElementById('chatContainer').appendChild(typingDiv);
+            
+            // Scroll to bottom
+            scrollToBottom();
+        }
+        
+        // Function to hide typing indicator
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        // Function to update memory indicator based on user message
+        function updateMemoryIndicator(message) {
+            const lowerMessage = message.toLowerCase();
+            const symptomKeywords = ['headache', 'pain', 'fever', 'cough', 'cold', 'nausea', 'dizzy', 'tired', 'sore'];
+            
+            let newSymptoms = [];
+            symptomKeywords.forEach(symptom => {
+                if (lowerMessage.includes(symptom) && !reportedSymptoms.includes(symptom)) {
+                    newSymptoms.push(symptom);
+                    reportedSymptoms.push(symptom);
+                }
+            });
+            
+            if (newSymptoms.length > 0) {
+                $('#memoryStatus').html(`<span class="text-info">I'll remember that you mentioned: ${newSymptoms.join(', ')}</span>`);
+                $('#contextBadge').addClass('badge-pulse');
+                setTimeout(() => {
+                    $('#contextBadge').removeClass('badge-pulse');
+                }, 3000);
+            } else if (reportedSymptoms.length > 0) {
+                $('#memoryStatus').text(`I remember your symptoms: ${reportedSymptoms.join(', ')}`);
+            }
+        }
+        
+        // Function to update memory with detected entities
+        function updateMemoryWithEntities(entities) {
+            let newEntityInfo = [];
+            
+            // Process symptoms
+            if (entities.symptoms && entities.symptoms.length > 0) {
+                entities.symptoms.forEach(symptom => {
+                    if (!reportedSymptoms.includes(symptom)) {
+                        reportedSymptoms.push(symptom);
+                        newEntityInfo.push(symptom);
+                    }
+                });
+            }
+            
+            // Process medical conditions if present
+            if (entities.conditions && entities.conditions.length > 0) {
+                entities.conditions.forEach(condition => {
+                    newEntityInfo.push(`medical condition: ${condition}`);
+                });
+            }
+            
+            if (newEntityInfo.length > 0) {
+                $('#memoryStatus').html(`<span class="text-info">I'll remember that you mentioned: ${newEntityInfo.join(', ')}</span>`);
+                $('#contextBadge').addClass('badge-pulse');
+                setTimeout(() => {
+                    $('#contextBadge').removeClass('badge-pulse');
+                }, 3000);
+            } else if (reportedSymptoms.length > 0) {
+                $('#memoryStatus').text(`I remember your symptoms: ${reportedSymptoms.join(', ')}`);
+            }
+        }
+        
+        // Function to update language indicator
+        function updateLanguageIndicator(language) {
+            const languageNames = {
+                'en': 'English',
+                'hi': 'Hindi',
+                'es': 'Spanish',
+                'fr': 'French',
+                'de': 'German'
+            };
+            
+            const languageName = languageNames[language] || language;
+            
+            // Add or update language badge next to context badge
+            if ($('#languageBadge').length) {
+                $('#languageBadge').text(`${languageName}`);
+            } else {
+                $('#contextBadge').after(`
+                    <span class="badge badge-pill badge-warning ml-1" id="languageBadge" data-toggle="tooltip" 
+                          title="Assistant detected language">
+                        <i class="fas fa-language mr-1"></i>${languageName}
+                    </span>
+                `);
+                $('[data-toggle="tooltip"]').tooltip();
+            }
+        }
+        
+        // Function to scroll chat to bottom
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    });
+</script>
+
+<style>
+    /* Chat message styles */
+    .message {
+        margin-bottom: 15px;
+    }
+    
+    .message.user {
+        text-align: right;
+    }
+    
+    .message-content {
+        display: inline-block;
+        max-width: 80%;
+        word-break: break-word;
+    }
+    
+    .message.user .message-content {
+        border-top-right-radius: 20px !important;
+        border-bottom-left-radius: 20px !important;
+        border-top-left-radius: 20px !important;
+        border-bottom-right-radius: 0 !important;
+        text-align: left;
+    }
+    
+    .message.bot .message-content {
+        border-top-left-radius: 20px !important;
+        border-bottom-right-radius: 20px !important;  
+        border-top-right-radius: 20px !important;
+        border-bottom-left-radius: 0 !important;
+    }
+    
+    /* Typing indicator animation */
+    .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background: #17a2b8;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 2px;
+        animation: pulse 1.5s infinite ease-in-out;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.6; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.6; }
+    }
+    
+    /* Badge pulse animation */
+    .badge-pulse {
+        animation: badge-pulse 2s infinite;
+    }
+    
+    @keyframes badge-pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Suggestion chips */
+    .suggestion-chip {
+        cursor: pointer;
+        transition: all 0.2s;
+        border-radius: 50px;
+    }
+    
+    .suggestion-chip:hover {
+        background-color: #17a2b8;
+        color: white;
+    }
+</style>
+{% endblock %} 
